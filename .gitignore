@@ -1,0 +1,19 @@
+# python 
+__pycache__/
+*.py[cod] 
+
+# Virtual Environments
+.venv/
+venv/
+
+
+# Scecrets and environment variables
+.env 
+
+# Jupyter 
+.ipynb_checkpoints/
+
+
+# Original dataset- keep locally, not in Git
+/supplier-sales-dataplatform/data/raw/*
+!/supplier-sales-data-platform/data/raw/.gitkeep

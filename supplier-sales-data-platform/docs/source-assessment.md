@@ -256,3 +256,76 @@ No source records have been deleted or modified as part of this assessment.
 - **Potential risk:** Removing duplicate rows without understanding their origin could change transaction quantities and sales totals.
 - **Current decision:** No duplicate rows will be removed during source assessment.
 - **Next action:** Investigate the dataset's date range, then define appropriate data-quality and deduplication rules based on the evidence.
+
+### Finding 9: Date Range and Date Parsing
+
+- **Observation:** `InvoiceDate` is stored as a string in the source dataset.
+- **Investigation:** Inspected the source date format and converted the values using `pd.to_datetime()` with the explicit format `%m/%d/%Y %H:%M`.
+- **Date range:** Earliest invoice date: `2010-12-01 08:26:00`. Latest invoice date: `2011-12-09 12:50:00`.
+- **Validation:** Zero date values failed conversion using the specified format.
+- **Potential risk:** Incorrect date-format assumptions can produce invalid dates or misinterpret dates, affecting time-based reporting.
+- **Current decision:** Use the verified date format for parsing. Preserve the original source data unchanged and perform transformations on a separate working representation.
+- **Status:** Initial date-range investigation completed. Further validation will be included in pipeline testing.
+
+## 10. Data Quality Flags and Missing-Value Overlap
+
+### Investigation
+
+Created Boolean flags to identify records with missing customer IDs and product descriptions.
+
+```python
+df["customer_id_missing"] = df["CustomerID"].isna()
+df["description_missing"] = df["Description"].isna()
+```
+
+### Findings
+
+| Data quality check                         | Records |
+| ------------------------------------------ | ------: |
+| Total source records                       | 541,909 |
+| Missing CustomerID                         | 135,080 |
+| Missing Description                        |   1,454 |
+| Both CustomerID and Description missing    |   1,454 |
+| CustomerID missing but Description present | 133,626 |
+
+All 1,454 records with missing descriptions also have missing customer IDs.
+
+Of the 135,080 records with missing customer IDs:
+
+- 1.08% also have missing descriptions.
+- 98.92% have a non-missing description.
+
+### Interpretation
+
+Missing customer IDs and missing product descriptions are distinct data-quality issues, although they overlap in this dataset.
+
+A missing customer ID does not automatically make a transaction unusable for every reporting purpose. For example, a record may still contribute to overall sales reporting if its transaction details satisfy the applicable business rules, even when customer-level attribution is unavailable.
+
+A non-missing description does not, by itself, establish that the product information is correct.
+
+### Initial Handling Decision
+
+- Retain records with missing customer IDs and flag them for data-quality monitoring.
+- Retain records with missing descriptions and flag them separately.
+- Keep the two flags independent so that each issue can be investigated and measured separately.
+- Do not invent missing values or delete records solely because these fields are missing.
+
+### Validation
+
+The Boolean flags were checked against the source data. The counts matched the initial profiling results:
+
+- `customer_id_missing`: 135,080 records.
+- `description_missing`: 1,454 records.
+- Both flags set to `True`: 1,454 records.
+
+These checks validate the observed counts and overlap. They do not establish the cause of the missing values or whether every affected record is suitable for every downstream reporting purpose.
+
+### Finding 11: Zero-Price Records with Positive Quantities
+
+- **Observation:** 2,515 records have a `UnitPrice` of zero. Of these, 1,179 have a positive `Quantity`, while 1,336 have a negative `Quantity`.
+- **Investigation:** The 1,179 positive-quantity records contain 72,603 units in total and contribute £0 to recorded line revenue. Of these records, 1,139 have a missing `CustomerID` and 592 have a missing `Description`.
+- **Invoice-level analysis:** 400 records belong to 53 distinct invoices that also contain at least one positive-priced line. The remaining 779 records belong to 766 distinct invoices with no positive-priced line identified.
+- **Additional investigation:** Inspected invoice `537197`, which contains a zero-price product alongside positively priced products and a postage line. This is consistent with, but does not prove, the possibility of a free item or promotional transaction.
+- **Potential risk:** Removing all zero-price records could discard meaningful transaction or operational information. Including them without an explicit business rule could also affect sales reporting and quantity-based metrics.
+- **Current decision:** Preserve these records during source assessment. Do not automatically delete them or classify them as errors.
+- **Next action:** Investigate the business meaning of zero-price records and define explicit rules for revenue reporting and quantity-based analysis before transforming the data.

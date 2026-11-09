@@ -15,8 +15,8 @@ venv/
 
 
 # Original dataset- keep locally, not in Git
-/supplier-sales-data-platform/data/raw/*
-!/supplier-sales-data-platform/data/raw/.gitkeep
+/data/raw/*
+!/data/raw/.gitkeep
 
 # Generated transformed data - keep locally, not in Git
-/supplier-sales-data-platform/data/processed/*
+/data/processed/*

@@ -23,7 +23,11 @@ def transform_data(df: pd.DataFrame) -> pd.DataFrame:
     df["LineRevenue"] = df["Quantity"] * df["UnitPrice"]
 
     df["customer_id_missing"] = df["CustomerID"].isna()
-    df["description_missing"] = df["Description"].isna()         
+    df["description_missing"] = df["Description"].isna()
+
+    df["CustomerID"] = df["CustomerID"].astype("Int64")    
+
+    print(df["CustomerID"].dtype)     
     
     return  df
 
@@ -32,7 +36,7 @@ def validate_data(
         expected_row_count: int | None = None
 ) -> None :
         if expected_row_count is not None:
-            assert len(df) == 541909, "Row count has changed"
+            assert len(df) == expected_row_count, "Row count has changed"
         
         assert df["InvoiceDate"].notna().all(), "Missing dates found"
         
@@ -51,7 +55,7 @@ def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     OUTPUT_PATH = OUTPUT_DIR/"online_retail_transformed.csv"
-    df.to_csv(OUTPUT_PATH, index=False)
+    df.to_csv(OUTPUT_PATH, index=False, na_rep = 'NULL' )
 
     saved_df = pd.read_csv(
         OUTPUT_PATH,
@@ -77,6 +81,8 @@ def main():
 
     print("\nOutput validation passed.")
     print(f"Saved rows: {len(saved_df):,}")
+
+   
 
 if __name__ == "__main__":
     main()

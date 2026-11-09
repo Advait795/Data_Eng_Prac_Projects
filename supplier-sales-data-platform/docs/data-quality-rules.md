@@ -14,7 +14,9 @@
 
 1. **Preserve raw data:** Never modify the original source CSV during transformation.
 2. **Flag before removing:** Identify data-quality issues before deciding whether records should be excluded.
-3. **Avoid unsupported assumptions:** Do not invent missing values or assume that unusual records are invalid without sufficient evidence.
+3. **Avoid unsupported assumptions:** Do not invent missing values or assume that unuscls
+cls
+ual records are invalid without sufficient evidence.
 4. **Validate transformations:** Check record counts, data types, missing values, and calculated values after processing.
 5. **Keep decisions traceable:** Document the reasoning behind data-quality rules and any changes to those rules.
 
